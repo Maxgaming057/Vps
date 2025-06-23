@@ -1,0 +1,35 @@
+name: VPS-24x8
+
+on:
+  workflow_dispatch:
+
+jobs:
+  vps:
+    runs-on: self-hosted
+
+    steps:
+      - name: Install SSH tools
+        run: |
+          apt update -y && apt upgrade -y
+          apt install -y curl openssh-server tmate
+
+          echo 'root:root' | chpasswd
+          mkdir -p /var/run/sshd
+          echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+          echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
+          service ssh restart
+
+      - name: Start SSHx and show link
+        run: |
+          echo "[*] Starting SSHx session..."
+          curl -sSf https://sshx.io/get | sh -s run --ssh "root@localhost:22" | tee sshx.log
+          
+          echo "🔗 VPS SSHx Link:"
+          grep -iE "https://sshx\.io|ssh [^ ]+@[^ ]+" sshx.log || echo "❌ SSHx link not found"
+
+      - name: Keep alive forever
+        run: |
+          while true; do
+            echo "✅ VPS is alive at $(date)"
+            sleep 60
+          done
