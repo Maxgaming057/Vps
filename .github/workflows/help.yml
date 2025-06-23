@@ -1,0 +1,35 @@
+name: VPS-24x7
+
+on:
+  workflow_dispatch:
+
+jobs:
+  vps:
+    runs-on: self-hosted
+
+    steps:
+      - name: Set up SSH environment
+        run: |
+          echo "[*] Updating system..."
+          apt update -y && apt upgrade -y
+          apt install -y curl openssh-server tmate
+
+          echo "[*] Setting root password..."
+          echo 'root:root' | chpasswd
+
+          echo "[*] Configuring SSH..."
+          mkdir -p /var/run/sshd
+          echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
+          echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
+          service ssh restart
+
+      - name: Start VPS with SSHx (Live SSH access)
+        run: |
+          echo "[*] Starting SSHx session..."
+          curl -sSf https://sshx.io/get | sh -s run --ssh "root@localhost:22"
+
+          # Keep workflow alive forever (true 24/7)
+          while true; do
+            echo "✅ VPS is still running at $(date)"
+            sleep 60
+          done
